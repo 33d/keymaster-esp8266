@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <FS.h>
-#include "network.h"
 
 #define log Serial
 
