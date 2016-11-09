@@ -6,6 +6,9 @@
 
 File apFile;
 
+const char* host = "members.hackadl.org";
+const char* fingerprint = "15:15:AA:69:72:8C:09:7C:E5:17:27:38:B3:2A:39:89:BC:65:3C:A9";
+
 // The WL_ constants, for debug output (from wl_definitions.h)
 const char* wl_status[] = { "IDLE_STATUS", "NO_SSID_AVAIL", "SCAN_COMPLETED",
   "CONNECTED", "CONNECT_FAILED", "CONNECTION_LOST", "DISCONNECTED" };
@@ -26,7 +29,36 @@ void setup() {
 }
 
 void check_card_reader() {
+  static bool runOnce = false;
+  while (!runOnce) {
+    WiFiClientSecure client;
+    if (!client.connect(host, 443)) {
+      log.println("Connection failed");
+      break;
+    }
+    if (!client.verify(fingerprint, host)) {
+      log.println("Fingerprint doesn't match");
+      break;
+    }
 
+    client.print("GET / HTTP/1.1\r\n"
+             "Host: members.hackadl.org\r\n"
+             "Connection: close\r\n\r\n");
+
+    String line;
+    do {
+      line = client.readStringUntil('\n');
+      line.trim();
+      log.print("Received ");
+      log.println(line);
+    } while (line.length() > 0);
+
+    client.stop();
+
+    break;
+  }
+
+  runOnce = true;
 }
 
 void connect_to_next_access_point() {
