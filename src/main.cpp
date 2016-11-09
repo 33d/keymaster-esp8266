@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <FS.h>
+#include <MFRC522.h>
 
 #define log Serial
 
