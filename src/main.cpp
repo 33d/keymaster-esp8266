@@ -47,6 +47,7 @@ void setup() {
   delay(50);
   mfrc522.PCD_Init();
   delay(50);
+  mfrc522.PCD_SetAntennaGain(0xFF);
   ShowReaderDetails();
 
   if (!SPIFFS.begin())
