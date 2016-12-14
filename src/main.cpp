@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <FS.h>
 #include <MFRC522.h>
+#include <base64encode.h>
 
 #define log Serial
 
@@ -56,38 +57,47 @@ void setup() {
   apFile = SPIFFS.open("/ap", "r");
 }
 
-void send_card() {
-  // TODO
-  static bool runOnce = false;
-  while (!runOnce) {
-    WiFiClientSecure client;
-    if (!client.connect(host, 443)) {
-      log.println("Connection failed");
-      break;
-    }
-    if (!client.verify(fingerprint, host)) {
-      log.println("Fingerprint doesn't match");
-      break;
-    }
+void send_card(uint8_t* id, int idLength) {
+  char base64[20];
+  uint8_t base64Count;
 
-    client.print("GET / HTTP/1.1\r\n"
-             "Host: members.hackadl.org\r\n"
-             "Connection: close\r\n\r\n");
-
-    String line;
-    do {
-      line = client.readStringUntil('\n');
-      line.trim();
-      log.print("Received ");
-      log.println(line);
-    } while (line.length() > 0);
-
-    client.stop();
-
-    break;
+  if (idLength > 10) {
+    log.print(idLength);
+    log.print(" <- ID is too long\n");
+    return; // avoid overflowing base64
   }
 
-  runOnce = true;
+  // Pad the base64 data, so it's a consistent length for Content-Length
+  memset(base64, ' ', 20);
+  base64Count = base64_encode(id, idLength, base64);
+
+  WiFiClientSecure client;
+  if (!client.connect(host, 443)) {
+    log.println("Connection failed");
+    return;
+  }
+  if (!client.verify(fingerprint, host)) {
+    log.println("Fingerprint doesn't match");
+    return;
+  }
+
+  client.print("POST /checkin HTTP/1.1\r\n"
+           "Host: members.hackadl.org\r\n"
+           "Content-Type: application/x-www-form-urlencoded\r\n"
+           "Content-Length: 23\r\n"
+           "Connection: close\r\n\r\nid=");
+
+  client.write((uint8_t*) ((void*) base64), 20);
+
+  String line;
+  do {
+    line = client.readStringUntil('\n');
+    line.trim();
+    log.print("Received ");
+    log.println(line);
+  } while (line.length() > 0);
+
+  client.stop();
 }
 
 void check_card_reader() {
@@ -99,6 +109,7 @@ void check_card_reader() {
     log.print(mfrc522.uid.uidByte[i], HEX);
   log.println();
   mfrc522.PICC_HaltA();
+  send_card(mfrc522.uid.uidByte, mfrc522.uid.size);
 }
 
 void connect_to_next_access_point() {
