@@ -4,6 +4,12 @@
 #include <MFRC522.h>
 #include <base64encode.h>
 
+struct AccessPoint {
+  const char* ap;
+  const char* password;
+};
+#include "settings"
+
 #define log Serial
 
 File apFile;
@@ -84,8 +90,8 @@ void send_card(uint8_t* id, int idLength) {
   client.print("POST /checkin HTTP/1.1\r\n"
            "Host: members.hackadl.org\r\n"
            "Content-Type: application/x-www-form-urlencoded\r\n"
-           "Content-Length: 23\r\n"
-           "Connection: close\r\n\r\nid=");
+           "Content-Length: 29\r\n"
+           "Connection: close\r\n\r\nsite=" siteid "&id=");
 
   client.write((uint8_t*) ((void*) base64), 20);
 
@@ -113,19 +119,12 @@ void check_card_reader() {
 }
 
 void connect_to_next_access_point() {
-  String line;
-  int separator;
-  while (1) {
-    line = apFile.readStringUntil('\n');
-    line.trim();
-    separator = line.indexOf(';');
-    if (separator != -1)
-      break;
-    apFile.seek(0, SeekSet);
-  }
-  String ssid = line.substring(0, separator);
-  String password = line.substring(separator + 1);
-  WiFi.begin(ssid.c_str(), password.c_str());
+  static const struct AccessPoint *ap = accessPoints;
+
+  WiFi.begin(ap->ap, ap->password);
+  ++ap;
+  if (ap->ap == 0) // the end of the list
+    ap = accessPoints;
 }
 
 void loop() {

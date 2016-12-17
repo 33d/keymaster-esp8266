@@ -1,0 +1,9 @@
+const struct AccessPoint accessPoints[] = {
+  { "Access Point 1", "Password 1" },
+  { "Access Point 2", "Password 2" },
+  // ...
+  { 0, 0 }
+};
+
+// Must be 1 character long
+#define siteid " "
