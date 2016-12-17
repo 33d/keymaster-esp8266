@@ -55,6 +55,8 @@ void setup() {
     log.println("SPIFFS begin failed!");
 
   apFile = SPIFFS.open("/ap", "r");
+
+  pinMode(LED_BUILTIN, OUTPUT); // Initialize the LED_BUILTIN pin as an output
 }
 
 void send_card(uint8_t* id, int idLength) {
@@ -129,6 +131,7 @@ void connect_to_next_access_point() {
 }
 
 void loop() {
+  digitalWrite(LED_BUILTIN, LOW);
   wl_status_t status = WiFi.status();
   log.print("Wifi: ");
   log.print(WiFi.SSID());
@@ -140,11 +143,13 @@ void loop() {
 
   switch (status) {
     case WL_CONNECTED:
+      digitalWrite(LED_BUILTIN, HIGH);
       check_card_reader();
       break;
     case WL_IDLE_STATUS:
     case WL_CONNECT_FAILED:
     case WL_NO_SSID_AVAIL:
+      digitalWrite(LED_BUILTIN, LOW);
       connect_to_next_access_point();
       break;
   }
