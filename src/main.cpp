@@ -15,6 +15,7 @@ struct AccessPoint {
 File apFile;
 
 MFRC522 mfrc522(D2, D1);
+int buzzer = D3;
 
 const char* host = "members.hackadl.org";
 const char* fingerprint = "15:15:AA:69:72:8C:09:7C:E5:17:27:38:B3:2A:39:89:BC:65:3C:A9";
@@ -65,6 +66,23 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT); // Initialize the LED_BUILTIN pin as an output
 }
 
+void buzzer_success() {
+  for (size_t i = 2000; i < 3000; i++) {
+    tone(buzzer,i,100);
+    delay(10);
+  }
+  for (size_t i = 3000; i > 2000; i--) {
+    tone(buzzer,i,100);
+    delay(10);
+  }
+}
+
+void buzzer_failure() {
+  tone(buzzer,1000,500);
+  delay(200);
+  tone(buzzer,500,500);
+}
+
 void send_card(uint8_t* id, int idLength) {
   char base64[20];
   uint8_t base64Count;
@@ -96,6 +114,13 @@ void send_card(uint8_t* id, int idLength) {
            "Connection: close\r\n\r\nsite=" siteid "&id=");
 
   client.write((uint8_t*) ((void*) base64), 20);
+
+  // Buzzer response
+  if (client.readStringUntil('\n').charAt(9) == '2') {
+    buzzer_success();
+  } else {
+    buzzer_failure();
+  }
 
   String line;
   do {
@@ -130,7 +155,6 @@ void connect_to_next_access_point() {
 }
 
 void loop() {
-  digitalWrite(LED_BUILTIN, LOW);
   wl_status_t status = WiFi.status();
   log.print("Wifi: ");
   log.print(WiFi.SSID());
@@ -142,13 +166,13 @@ void loop() {
 
   switch (status) {
     case WL_CONNECTED:
-      digitalWrite(LED_BUILTIN, HIGH);
+      digitalWrite(LED_BUILTIN, LOW);
       check_card_reader();
       break;
     case WL_IDLE_STATUS:
     case WL_CONNECT_FAILED:
     case WL_NO_SSID_AVAIL:
-      digitalWrite(LED_BUILTIN, LOW);
+      digitalWrite(LED_BUILTIN, HIGH);
       connect_to_next_access_point();
       break;
   }
