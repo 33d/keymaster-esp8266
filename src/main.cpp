@@ -63,10 +63,11 @@ void setup() {
 
   apFile = SPIFFS.open("/ap", "r");
 
-  pinMode(LED_BUILTIN, OUTPUT); // Initialize the LED_BUILTIN pin as an output
+  pinMode(LED_BUILTIN, OUTPUT); // Use the built in LED on the ESP8266
 }
 
 void buzzer_success() {
+  // TODO check that this success tone range works
   for (size_t i = 2000; i < 3000; i++) {
     tone(buzzer,i,100);
     delay(10);
@@ -115,7 +116,7 @@ void send_card(uint8_t* id, int idLength) {
 
   client.write((uint8_t*) ((void*) base64), 20);
 
-  // Buzzer response
+  // Buzz success if first line of HTTP response contains 2xx
   if (client.readStringUntil('\n').charAt(9) == '2') {
     buzzer_success();
   } else {
