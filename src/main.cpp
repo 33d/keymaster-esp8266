@@ -68,11 +68,11 @@ void setup() {
 
 void buzzer_success() {
   // TODO check that this success tone range works
-  for (size_t i = 2000; i < 3000; i++) {
+  for (size_t i = 2000; i < 3000; i = i+80) {
     tone(buzzer,i,100);
     delay(10);
   }
-  for (size_t i = 3000; i > 2000; i--) {
+  for (size_t i = 3000; i > 2000; i = i-80) {
     tone(buzzer,i,100);
     delay(10);
   }
