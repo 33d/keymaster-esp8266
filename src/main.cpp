@@ -138,6 +138,8 @@ void check_card_reader() {
   if (!mfrc522.PICC_IsNewCardPresent() || !mfrc522.PICC_ReadCardSerial())
     return;
 
+  tone(buzzer, 1000, 100);
+
   log.print("Scanned PICC's UID: ");
   for (int i = 0; i < 7; i++)
     log.print(mfrc522.uid.uidByte[i], HEX);
@@ -148,6 +150,11 @@ void check_card_reader() {
 
 void connect_to_next_access_point() {
   static const struct AccessPoint *ap = accessPoints;
+
+  tone(buzzer, 500, 50);
+  // The chip resets without this; maybe there's not enough power to begin
+  // the wifi scan
+  delay(1000);
 
   WiFi.begin(ap->ap, ap->password);
   ++ap;
