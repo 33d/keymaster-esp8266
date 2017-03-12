@@ -81,6 +81,9 @@ build/%.S.o: $(TOOL_HOME)/%.S build platformconfig
 build:
 	-mkdir build
 
+clean:
+	-rm -R build
+
 # Includes the modified platform.txt
 platformconfig: build/platform.mk
 	$(eval include $<)
@@ -89,5 +92,5 @@ platformconfig: build/platform.mk
 build/platform.mk: build
 	sed 's,{\([^}]*\)},$$(\1),g' < $(TOOL_HOME)/platform.txt > $@
 	
-.PHONY: platformconfig
+.PHONY: platformconfig clean
 
