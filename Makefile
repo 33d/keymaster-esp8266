@@ -33,7 +33,13 @@ includes ::= -I$(TOOL_HOME)/cores/esp8266 -I$(TOOL_HOME)/variants/nodemcu \
     $(foreach dir,$(wildcard lib/*/src),-I$(dir))
 build.path ::= build
 
-$(PROJECT).elf: $(foreach obj,$(OBJECTS),build/$(obj)) build/arduino.ar
+build/$(PROJECT).hex: build/$(PROJECT).elf
+	$(eval build.flash_mode ::= dio)
+	$(eval build.flash_freq ::= 40)
+	$(eval build.flash_size ::= 4M) 
+	$(recipe.objcopy.hex.pattern)
+
+build/$(PROJECT).elf: $(foreach obj,$(OBJECTS),build/$(obj)) build/arduino.ar
 	$(eval object_files ::= $^)
 	$(recipe.c.combine.pattern)
 
