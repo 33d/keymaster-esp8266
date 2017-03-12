@@ -33,11 +33,6 @@ includes ::= -I$(TOOL_HOME)/cores/esp8266 -I$(TOOL_HOME)/variants/nodemcu \
     $(foreach dir,$(wildcard lib/*/src),-I$(dir))
 build.path ::= build
 
-PLATFORM_TMP ::= $(shell mktemp -p '' -t platformvars.XXXXXX )
-PLATFORM_TXT ::= $(TOOL_HOME)/platform.txt
-$(shell sed 's,{\([^}]*\)},$$(\1),g' < $(PLATFORM_TXT) > $(PLATFORM_TMP))
-include $(PLATFORM_TMP)
-
 $(PROJECT).elf: $(foreach obj,$(OBJECTS),build/$(obj)) build/arduino.ar
 	$(eval object_files ::= $^)
 	$(recipe.c.combine.pattern)
@@ -52,32 +47,32 @@ endef
 build/arduino.ar: $(foreach obj,$(CORE_OBJECTS),build/$(obj)) $(foreach obj,$(LIBRARY_OBJECTS),build/$(obj))
 	$(foreach obj,$^,$(call add_archive_member,$(obj)))
 
-build/%.c.o: %.c build
+build/%.c.o: %.c build platformconfig
 	-mkdir --parents build/$(shell dirname $(<))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.c.o.pattern)
 
-build/%.cpp.o: %.cpp build
+build/%.cpp.o: %.cpp build platformconfig
 	-mkdir --parents build/$(shell dirname $(<))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.cpp.o.pattern)
 
 # Build core and libraries
-build/%.cpp.o: $(TOOL_HOME)/%.cpp build
+build/%.cpp.o: $(TOOL_HOME)/%.cpp build platformconfig
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.cpp.o.pattern)
 
-build/%.c.o: $(TOOL_HOME)/%.c build
+build/%.c.o: $(TOOL_HOME)/%.c build platformconfig
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.c.o.pattern)
 
-build/%.S.o: $(TOOL_HOME)/%.S build
+build/%.S.o: $(TOOL_HOME)/%.S build platformconfig
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
@@ -85,4 +80,14 @@ build/%.S.o: $(TOOL_HOME)/%.S build
 
 build:
 	-mkdir build
+
+# Includes the modified platform.txt
+platformconfig: build/platform.mk
+	$(eval include $<)
+
+# Hack platform.txt so it uses Makefile variable substitution
+build/platform.mk: build
+	sed 's,{\([^}]*\)},$$(\1),g' < $(TOOL_HOME)/platform.txt > $@
+	
+.PHONY: platformconfig
 
