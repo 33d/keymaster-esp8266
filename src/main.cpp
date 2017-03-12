@@ -12,8 +12,6 @@ struct AccessPoint {
 
 #define log Serial
 
-File apFile;
-
 MFRC522 mfrc522(D2, D1);
 int buzzer = D3;
 
@@ -57,11 +55,6 @@ void setup() {
   delay(50);
   mfrc522.PCD_SetAntennaGain(0xFF);
   ShowReaderDetails();
-
-  if (!SPIFFS.begin())
-    log.println("SPIFFS begin failed!");
-
-  apFile = SPIFFS.open("/ap", "r");
 
   pinMode(LED_BUILTIN, OUTPUT); // Use the built in LED on the ESP8266
 }
