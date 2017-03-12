@@ -1,5 +1,6 @@
 PROJECT ::= nfc-esp8266
-OBJECTS ::= src/main.o lib/mfrc522/src/MFRC522.o lib/base64/src/base64encode.o
+SOURCES ::= src/main.cpp lib/mfrc522/src/MFRC522.cpp \
+    lib/base64/src/base64encode.c
 build.f_cpu ::= 80000000L
 build.flash_ld ::= eagle.flash.4m1m.ld
 
@@ -8,19 +9,20 @@ build.project_name ::= $(PROJECT)
 ARDUINO_HOME ?= $(HOME)/Arduino
 TOOL_HOME ?= $(ARDUINO_HOME)/hardware/esp8266com/esp8266
 
+OBJECTS ::= $(foreach s,$(SOURCES),$(s).o)
 CORE_DIR ::= $(TOOL_HOME)/cores/esp8266
 CORE_SOURCES ::= $(foreach dir,$(wildcard $(CORE_DIR)/*.c* $(CORE_DIR)/*/*.c* $(CORE_DIR)/*.S),$(subst $(TOOL_HOME)/,,$(dir)))
-CORE_OBJECTS ::= $(CORE_SOURCES:.c=.o)
-CORE_OBJECTS ::= $(CORE_OBJECTS:.cpp=.o)
-CORE_OBJECTS ::= $(CORE_OBJECTS:.S=.o)
+CORE_OBJECTS ::= $(CORE_SOURCES:.c=.c.o)
+CORE_OBJECTS ::= $(CORE_OBJECTS:.cpp=.cpp.o)
+CORE_OBJECTS ::= $(CORE_OBJECTS:.S=.S.o)
 CORE_OBJECTS ::= $(filter-out %.unused,$(CORE_OBJECTS))
 
 LIBRARY_DIR ::= $(TOOL_HOME)/libraries
 LIBRARY_SOURCES ::= $(foreach dir,$(wildcard $(LIBRARY_DIR)/*/*.c* $(LIBRARY_DIR)/*/src/*.c*),$(subst $(TOOL_HOME)/,,$(dir)))
-LIBRARY_OBJECTS ::= $(LIBRARY_SOURCES:.c=.o)
-LIBRARY_OBJECTS ::= $(LIBRARY_OBJECTS:.cpp=.o)
+LIBRARY_OBJECTS ::= $(LIBRARY_SOURCES:.c=.c.o)
+LIBRARY_OBJECTS ::= $(LIBRARY_OBJECTS:.cpp=.cpp.o)
 # This file doesn't handle the ARDUINO_BOARD macro correctly
-LIBRARY_OBJECTS ::= $(filter-out %/ESP8266mDNS.o,$(LIBRARY_OBJECTS))
+LIBRARY_OBJECTS ::= $(filter-out %/ESP8266mDNS.cpp.o,$(LIBRARY_OBJECTS))
 
 runtime.platform.path ::= $(TOOL_HOME)
 build.board ::= nodemcuv2
@@ -50,32 +52,32 @@ endef
 build/arduino.ar: $(foreach obj,$(CORE_OBJECTS),build/$(obj)) $(foreach obj,$(LIBRARY_OBJECTS),build/$(obj))
 	$(foreach obj,$^,$(call add_archive_member,$(obj)))
 
-build/%.o: %.c build
+build/%.c.o: %.c build
 	-mkdir --parents build/$(shell dirname $(<))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.c.o.pattern)
 
-build/%.o: %.cpp build
+build/%.cpp.o: %.cpp build
 	-mkdir --parents build/$(shell dirname $(<))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.cpp.o.pattern)
 
 # Build core and libraries
-build/%.o: $(TOOL_HOME)/%.cpp build
+build/%.cpp.o: $(TOOL_HOME)/%.cpp build
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.cpp.o.pattern)
 
-build/%.o: $(TOOL_HOME)/%.c build
+build/%.c.o: $(TOOL_HOME)/%.c build
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.c.o.pattern)
 
-build/%.o: $(TOOL_HOME)/%.S build
+build/%.S.o: $(TOOL_HOME)/%.S build
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
