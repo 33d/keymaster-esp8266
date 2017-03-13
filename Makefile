@@ -3,6 +3,9 @@ SOURCES ::= src/main.cpp lib/mfrc522/src/MFRC522.cpp \
     lib/base64/src/base64encode.c
 build.f_cpu ::= 80000000L
 build.flash_ld ::= eagle.flash.4m1m.ld
+upload.resetmethod ::= nodemcu
+upload.speed ?= 115200
+serial.port ?= /dev/ttyUSB0
 
 build.project_name ::= $(PROJECT)
 
@@ -84,6 +87,12 @@ build/%.S.o: $(TOOL_HOME)/%.S build platformconfig
 	$(eval object_file ::= $@)
 	$(recipe.S.o.pattern)
 
+upload: build/$(PROJECT).hex
+	$(eval path ::= $(tools.esptool.path))
+	$(eval cmd ::= $(tools.esptool.cmd))
+	$(eval upload.verbose ::= -vv)
+	$(tools.esptool.upload.pattern)
+
 build:
 	-mkdir build
 
@@ -98,5 +107,5 @@ platformconfig: build/platform.mk
 build/platform.mk: build
 	sed 's,{\([^}]*\)},$$(\1),g' < $(TOOL_HOME)/platform.txt > $@
 	
-.PHONY: platformconfig clean
+.PHONY: platformconfig clean upload
 
