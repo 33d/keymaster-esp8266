@@ -18,7 +18,7 @@ MFRC522 mfrc522(D2, D1);
 int buzzer = D3;
 
 const char* host = "members.hackadl.org";
-const char* fingerprint = "15:15:AA:69:72:8C:09:7C:E5:17:27:38:B3:2A:39:89:BC:65:3C:A9";
+const char* fingerprint = "A3:F0:30:25:05:F0:3E:7C:2F:2A:3B:AB:06:2D:F2:5C:71:A2:24:59";
 
 // The WL_ constants, for debug output (from wl_definitions.h)
 const char* wl_status[] = { "IDLE_STATUS", "NO_SSID_AVAIL", "SCAN_COMPLETED",
