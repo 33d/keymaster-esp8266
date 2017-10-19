@@ -3,6 +3,9 @@
 #include <FS.h>
 #include <MFRC522.h>
 #include <base64encode.h>
+#include <time.h>
+
+#include "cert.h"
 
 struct AccessPoint {
   const char* ap;
@@ -16,7 +19,6 @@ MFRC522 mfrc522(D2, D1);
 int buzzer = D3;
 
 const char* host = "members.hackadl.org";
-const char* fingerprint = "A3:F0:30:25:05:F0:3E:7C:2F:2A:3B:AB:06:2D:F2:5C:71:A2:24:59";
 
 // The WL_ constants, for debug output (from wl_definitions.h)
 const char* wl_status[] = { "IDLE_STATUS", "NO_SSID_AVAIL", "SCAN_COMPLETED",
@@ -92,14 +94,19 @@ void send_card(uint8_t* id, int idLength) {
   base64Count = base64_encode(id, idLength, base64);
 
   WiFiClientSecure client;
+  if (!client.setCACert(rootcert, sizeof(rootcert))) {
+    log.println("Certificate didn't load");
+    return;
+  }
   if (!client.connect(host, 443)) {
     log.println("Connection failed");
     return;
   }
-  if (!client.verify(fingerprint, host)) {
-    log.println("Fingerprint doesn't match");
+  if (!client.verifyCertChain("members.hackadl.org")) {
+    log.println("Certificate verification failed");
     return;
   }
+  log.println("Certificate OK");
 
   client.print("POST /checkin HTTP/1.1\r\n"
            "Host: members.hackadl.org\r\n"
@@ -155,6 +162,26 @@ void connect_to_next_access_point() {
     ap = accessPoints;
 }
 
+void set_time() {
+  time_t now = time(nullptr);
+  if (now > 1000)
+    return; // Time already set
+
+  Serial.print("Setting time using SNTP");
+  configTime(0, 0, "pool.ntp.org", "time.google.com");
+  now = time(nullptr);
+  while (now < 1000) {
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+  }
+  Serial.println("");
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+  Serial.print("Current time: ");
+  Serial.print(asctime(&timeinfo));
+}
+
 void loop() {
   wl_status_t status = WiFi.status();
   log.print("Wifi: ");
@@ -168,6 +195,7 @@ void loop() {
   switch (status) {
     case WL_CONNECTED:
       digitalWrite(LED_BUILTIN, LOW);
+      set_time();
       check_card_reader();
       break;
     case WL_IDLE_STATUS:

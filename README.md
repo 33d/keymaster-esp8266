@@ -3,8 +3,8 @@
 *This probably won't work on Windows, unless you use msys2 or Cygwin.*
 
  1. Install Arduino
- 1. Install the "git version" of the esp8266 Arduino toolchain (I used version 04df3ad), follwing [the instructions in the README][esp8266-arduino-install-git].
- 1. Run `make` from this project's root directory.
+ 1. Install the "git version" of the esp8266 Arduino toolchain (I used version 2.4.0-rc2, 0c897c3), following [the instructions in the README][esp8266-arduino-install-git].
+ 1. Run `make TOOL_HOME=<arduino-home>/hardware/esp8266com/esp8266` from this project's root directory.
 
 ## PlatformIO
 
