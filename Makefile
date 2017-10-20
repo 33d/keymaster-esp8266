@@ -56,32 +56,32 @@ endef
 build/arduino.ar: $(foreach obj,$(CORE_OBJECTS),build/$(obj)) $(foreach obj,$(LIBRARY_OBJECTS),build/$(obj))
 	$(foreach obj,$^,$(call add_archive_member,$(obj)))
 
-build/%.c.o: %.c build platformconfig
+build/%.c.o: %.c
 	-mkdir --parents build/$(shell dirname $(<))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.c.o.pattern)
 
-build/%.cpp.o: %.cpp build platformconfig
+build/%.cpp.o: %.cpp
 	-mkdir --parents build/$(shell dirname $(<))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.cpp.o.pattern)
 
 # Build core and libraries
-build/%.cpp.o: $(TOOL_HOME)/%.cpp build platformconfig
+build/%.cpp.o: $(TOOL_HOME)/%.cpp
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.cpp.o.pattern)
 
-build/%.c.o: $(TOOL_HOME)/%.c build platformconfig
+build/%.c.o: $(TOOL_HOME)/%.c
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
 	$(recipe.c.o.pattern)
 
-build/%.S.o: $(TOOL_HOME)/%.S build platformconfig
+build/%.S.o: $(TOOL_HOME)/%.S
 	-mkdir --parents $(dir $(@:.o=))
 	$(eval source_file ::= $<)
 	$(eval object_file ::= $@)
@@ -93,19 +93,16 @@ upload: build/$(PROJECT).hex
 	$(eval upload.verbose ::= -vv)
 	$(tools.esptool.upload.pattern)
 
-build:
-	-mkdir build
-
 clean:
 	-rm -R build
 
-# Includes the modified platform.txt
-platformconfig: build/platform.mk
-	$(eval include $<)
+.PHONY: platformconfig clean upload
 
 # Hack platform.txt so it uses Makefile variable substitution
-build/platform.mk: build
-	sed 's,{\([^}]*\)},$$(\1),g' < $(TOOL_HOME)/platform.txt > $@
-	
-.PHONY: platformconfig clean upload
+# This should always run; see https://stackoverflow.com/a/10727593
+build/platform.mk: $(TOOL_HOME)/platform.txt
+	test -d build || mkdir build
+	sed 's,{\([^}]*\)},$$(\1),g' < $< > $@
+
+-include build/platform.mk
 
