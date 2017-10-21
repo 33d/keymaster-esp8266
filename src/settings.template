@@ -1,6 +1,6 @@
 const struct AccessPoint accessPoints[] = {
-  { "Access Point 1", "Password 1" },
-  { "Access Point 2", "Password 2" },
+  { "Access Point 1", "Password 1", "pool.ntp.org", "time.google.com" },
+  { "Access Point 2", "Password 2", "pool.ntp.org", "time.google.com" },
   // ...
   { 0, 0 }
 };

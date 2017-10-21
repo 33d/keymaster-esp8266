@@ -10,6 +10,8 @@
 struct AccessPoint {
   const char* ap;
   const char* password;
+  const char* ntp1;
+  const char* ntp2;
 };
 #include "settings"
 
@@ -18,6 +20,7 @@ struct AccessPoint {
 MFRC522 mfrc522(D2, D1);
 int buzzer = D3;
 
+const struct AccessPoint* thisAP = 0;
 const char* host = "members.hackadl.org";
 
 // The WL_ constants, for debug output (from wl_definitions.h)
@@ -149,17 +152,18 @@ void check_card_reader() {
 }
 
 void connect_to_next_access_point() {
-  static const struct AccessPoint *ap = accessPoints;
+  static const struct AccessPoint *nextAP = accessPoints;
 
   tone(buzzer, 500, 50);
   // The chip resets without this; maybe there's not enough power to begin
   // the wifi scan
   delay(1000);
 
-  WiFi.begin(ap->ap, ap->password);
-  ++ap;
-  if (ap->ap == 0) // the end of the list
-    ap = accessPoints;
+  thisAP = nextAP;
+  WiFi.begin(thisAP->ap, thisAP->password);
+  ++nextAP;
+  if (nextAP->ap == 0) // the end of the list
+    nextAP = accessPoints;
 }
 
 void set_time() {
@@ -168,7 +172,7 @@ void set_time() {
     return; // Time already set
 
   Serial.print("Setting time using SNTP");
-  configTime(0, 0, "pool.ntp.org", "time.google.com");
+  configTime(0, 0, thisAP->ntp1, thisAP->ntp2);
   now = time(nullptr);
   while (now < 1000) {
     delay(500);
