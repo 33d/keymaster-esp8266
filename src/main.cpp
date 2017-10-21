@@ -22,6 +22,10 @@ int buzzer = D3;
 
 const struct AccessPoint* thisAP = 0;
 const char* host = "members.hackadl.org";
+// The last time a connect was attempted
+unsigned long lastConnectTime;
+// Wait this time before trying the next AP
+const int connectTimeout = 10000;
 
 // The WL_ constants, for debug output (from wl_definitions.h)
 const char* wl_status[] = { "IDLE_STATUS", "NO_SSID_AVAIL", "SCAN_COMPLETED",
@@ -62,6 +66,8 @@ void setup() {
   ShowReaderDetails();
 
   pinMode(LED_BUILTIN, OUTPUT); // Use the built in LED on the ESP8266
+
+  lastConnectTime = millis();
 }
 
 void buzzer_success() {
@@ -160,6 +166,7 @@ void connect_to_next_access_point() {
   delay(1000);
 
   thisAP = nextAP;
+  lastConnectTime = millis();
   WiFi.begin(thisAP->ap, thisAP->password);
   ++nextAP;
   if (nextAP->ap == 0) // the end of the list
@@ -196,18 +203,16 @@ void loop() {
   log.print(WiFi.localIP());
   log.println();
 
-  switch (status) {
-    case WL_CONNECTED:
-      digitalWrite(LED_BUILTIN, LOW);
-      set_time();
-      check_card_reader();
-      break;
-    case WL_IDLE_STATUS:
-    case WL_CONNECT_FAILED:
-    case WL_NO_SSID_AVAIL:
+  if (status == WL_CONNECTED) {
+    digitalWrite(LED_BUILTIN, LOW);
+    set_time();
+    check_card_reader();
+  } else if (status == WL_IDLE_STATUS
+    || status == WL_CONNECT_FAILED
+    || status == WL_NO_SSID_AVAIL
+    || lastConnectTime + connectTimeout < millis()) {
       digitalWrite(LED_BUILTIN, HIGH);
       connect_to_next_access_point();
-      break;
   }
 
   delay(200);
