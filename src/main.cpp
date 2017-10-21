@@ -120,7 +120,7 @@ void send_card(uint8_t* id, int idLength) {
   client.print("POST /checkin HTTP/1.1\r\n"
            "Host: members.hackadl.org\r\n"
            "Content-Type: application/x-www-form-urlencoded\r\n"
-           "Content-Length: 29\r\n"
+           "Content-Length: 45\r\n"
            "Connection: close\r\n\r\nsite=" siteid "&id=");
 
   client.write((uint8_t*) ((void*) base64), 20);
