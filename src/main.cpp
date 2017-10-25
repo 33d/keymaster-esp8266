@@ -117,10 +117,12 @@ void send_card(uint8_t* id, int idLength) {
   }
   log.println("Certificate OK");
 
+  // I don't know why Content-Length is 44 when it should be 45, but the server
+  // rejects that
   client.print("POST /checkin HTTP/1.1\r\n"
            "Host: members.hackadl.org\r\n"
            "Content-Type: application/x-www-form-urlencoded\r\n"
-           "Content-Length: 45\r\n"
+           "Content-Length: 44\r\n"
            "Connection: close\r\n\r\nsite=" siteid "&id=");
 
   client.write((uint8_t*) ((void*) base64), 20);
